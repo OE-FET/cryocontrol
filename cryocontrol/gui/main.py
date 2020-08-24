@@ -88,7 +88,7 @@ class TemperatureControlGui(QtWidgets.QMainWindow):
         self.r2_checkbox.clicked.connect(self.change_ramp_auto)
         self.gf1_edit.returnPressed.connect(self.change_flow)
         self.gf2_checkbox.clicked.connect(self.change_flow_auto)
-        self.gf3_edit.returnPressed.connect(self.change_flow_min)
+
         self.h1_edit.returnPressed.connect(self.change_heater)
         self.h2_checkbox.clicked.connect(self.change_heater_auto)
 
@@ -181,7 +181,6 @@ class TemperatureControlGui(QtWidgets.QMainWindow):
             self.r2_checkbox.setEnabled(True)
             self.gf1_edit.setEnabled(True)
             self.gf2_checkbox.setEnabled(True)
-            self.gf3_edit.setEnabled(True)
             self.h1_edit.setEnabled(True)
             self.h2_checkbox.setEnabled(True)
 
@@ -200,7 +199,7 @@ class TemperatureControlGui(QtWidgets.QMainWindow):
             self.r2_checkbox.setEnabled(False)
             self.gf1_edit.setEnabled(False)
             self.gf2_checkbox.setEnabled(False)
-            self.gf3_edit.setEnabled(False)
+
             self.h1_edit.setEnabled(False)
             self.h2_checkbox.setEnabled(False)
 
@@ -228,14 +227,12 @@ class TemperatureControlGui(QtWidgets.QMainWindow):
 
         # gas flow signals
         self.gf1_edit.updateValue(self.controller.gasflow)
-        self.gf3_edit.updateValue(self.controller.gasflow_setpoint)
 
         is_gf_auto = self.controller.gasflow_auto
         self.gf1_edit.setReadOnly(is_gf_auto)
         self.gf1_edit.setEnabled(not is_gf_auto)
         self.gf2_checkbox.setChecked(is_gf_auto)
         self.gf2_checkbox.setEnabled(True)
-        self.gf3_edit.setEnabled(True)
 
         # temperature signals
         self.t1_reading.setText('{} K'.format(self.controller.temperature))
