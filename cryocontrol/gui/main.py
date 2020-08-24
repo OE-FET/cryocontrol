@@ -108,12 +108,13 @@ class TemperatureControlGui(QtWidgets.QMainWindow):
         # check if mercury is connected, connect slots
         self.display_message('Looking for temperature controller at %s...' %
                              self.controller.visa_address)
-        self.update_gui_connection(self.controller.connected)
+        self.update_gui_connection()
 
         # get new readings every second, update UI
         self.timer = QtCore.QTimer()
-        self.timer.timeout = 1000
-        self.timeout.connect(self.update_gui)
+        self.timer.setInterval(1000)
+        self.timer.timeout.connect(self.update_gui)
+        self.timer.start()
 
         # set up logging to file
         self.setup_logging()
@@ -161,7 +162,7 @@ class TemperatureControlGui(QtWidgets.QMainWindow):
         self.update_gui_connection()
 
         if self.controller.connected:
-            self.update_controls()
+            self.update_readings()
             self.update_plot()
 
     @QtCore.pyqtSlot()
@@ -210,10 +211,7 @@ class TemperatureControlGui(QtWidgets.QMainWindow):
         self.statusbar.showMessage('%s' % text)
 
     @QtCore.pyqtSlot(object)
-    def update_controls(self, readings):
-        """
-        Parses readings for the MercuryMonitorApp and updates UI accordingly
-        """
+    def update_readings(self):
 
         # heater signals
         self.h1_label.setText('Heater, {} V:'.format(self.controller.heater_volt))
@@ -244,7 +242,7 @@ class TemperatureControlGui(QtWidgets.QMainWindow):
 
         # alarms
         alarm_str = ''
-        for k, v in readings['Alarms'].items():
+        for k, v in self.controller.alarms:
             alarm_str += '{}: {} '.format(k, v)
 
         self.alarm_label.setText(alarm_str)
@@ -254,13 +252,13 @@ class TemperatureControlGui(QtWidgets.QMainWindow):
         else:
             self.alarm_label.hide()
 
-    @QtCore.pyqtSlot(object)
-    def update_plot(self, readings):
+    @QtCore.pyqtSlot()
+    def update_plot(self):
         # append data for plotting
         self.xdata = np.append(self.xdata, time.time())
-        self.ydata_tmpr = np.append(self.ydata_tmpr, readings['Temp'])
-        self.ydata_gflw = np.append(self.ydata_gflw, readings['FlowPercent'] / 100)
-        self.ydata_htr = np.append(self.ydata_htr, readings['HeaterPercent'] / 100)
+        self.ydata_tmpr = np.append(self.ydata_tmpr, self.controller.temperature)
+        self.ydata_gflw = np.append(self.ydata_gflw, self.controller.gasflow / 100)
+        self.ydata_htr = np.append(self.ydata_htr, self.controller.heater_setpoint / 100)
 
         # prevent data vector from exceeding MAX_DISPLAY
         self.xdata = self.xdata[-self.MAX_DISPLAY:]
