@@ -17,8 +17,10 @@ class Itc503(TempController):
 
     def connect(self, **kwargs):
         super().connect(**kwargs)
-        self.connection.write('C3')  # set to remote mode
-        self.connection.write('Q0')  # read termination with CR
+
+        if self.connected:
+            self.connection.write('C3')  # set to remote mode
+            self.connection.write('Q0')  # read termination with CR
 
     def _get_status(self):
         status = self.connection.query('X')
