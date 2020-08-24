@@ -56,6 +56,18 @@ class TempController(ABC):
     def connected(self) -> bool:
         return self.connection is not None
 
+    def query(self, value: str) -> str:
+        with self._lock:
+            return self.connection.query(value)
+
+    def read(self) -> str:
+        with self._lock:
+            return self.connection.read()
+
+    def write(self, value: str) -> None:
+        with self._lock:
+            self.connection.write(value)
+
     def __repr__(self) -> str:
         return '<{}({})>'.format(type(self).__name__, self.visa_address)
 

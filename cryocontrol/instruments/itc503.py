@@ -19,19 +19,20 @@ class Itc503(TempController):
         super().connect(**kwargs)
 
         if self.connected:
-            self.connection.write('Q0')  # read termination with CR
-            self.connection.query('C3')  # set to remote mode
+            self.write('Q0')  # read termination with CR
+            self.query('C3')  # set to remote mode
 
     def _get_status(self):
-        status = self.connection.query('X')
+        status = self.query('X')
         pattern = ('(?P<system>X\d)(?P<auto>A\d)(?P<lock>C\d)'
                    '(?P<sweep>S\d{1,2})(?P<control_sensor>H\d)(?P<auto_pid>L\d)')
         match = re.fullmatch(pattern, status)
         return match.groupdict()
 
     def _read_channel(self, number):
-        resp = self.connection.query('R{:.0f}'.format(number))
-        return float(resp[1:])
+        resp = self.query('R{:.0f}'.format(number))
+        numeric = ''.join(list(filter(lambda s: s in '0123456789.', resp)))
+        return float(numeric)
 
     def select_temp_module(self, name):
         """
@@ -42,7 +43,7 @@ class Itc503(TempController):
         """
         if name not in ('1', '2', '3'):
             raise ValueError("Sensor name must be '1', '2' or '3'")
-        self.connection.query('H{}'.format(name))
+        self.query('H{}'.format(name))
 
     def select_heater_module(self, name):
         """
@@ -77,7 +78,7 @@ class Itc503(TempController):
             raise ValueError('Temperature must be between 0 K and 300 K')
 
         value = round(value, 2)
-        self.connection.query('T{}'.format(str(value)))
+        self.query('T{}'.format(str(value)))
 
     @property
     def temperature_ramp(self):
@@ -119,14 +120,14 @@ class Itc503(TempController):
         status = self._get_status()
         if status['auto'] in ('A0', 'A1'):  # gas manual
             if value:
-                self.connection.query('A1')  # heater auto, gas manual
+                self.query('A1')  # heater auto, gas manual
             else:
-                self.connection.query('A0')  # heater manual, gas manual
+                self.query('A0')  # heater manual, gas manual
         else:  # gas auto
             if value:
-                self.connection.query('A3')  # heater auto, gas auto
+                self.query('A3')  # heater auto, gas auto
             else:
-                self.connection.query('A2')  # heater manual, gas auto
+                self.query('A2')  # heater manual, gas auto
 
     @property
     def heater_setpoint(self):
@@ -140,7 +141,7 @@ class Itc503(TempController):
         if not 0 <= value <= 99.9:
             raise ValueError('Heater output must be between 0 and 99.9%')
         value = round(value, 1)
-        self.connection.query('O{}'.format(str(value)))
+        self.query('O{}'.format(str(value)))
 
     @property
     def gasflow(self):
@@ -162,14 +163,14 @@ class Itc503(TempController):
         status = self._get_status()
         if status['auto'] in ('A0', 'A2'):  # heater manual
             if value:
-                self.connection.query('A2')  # heater manual, gas auto
+                self.query('A2')  # heater manual, gas auto
             else:
-                self.connection.query('A0')  # heater manual, gas manual
+                self.query('A0')  # heater manual, gas manual
         else:  # heater auto
             if value:
-                self.connection.query('A3')  # heater auto, gas auto
+                self.query('A3')  # heater auto, gas auto
             else:
-                self.connection.query('A1')  # heater auto, gas manual
+                self.query('A1')  # heater auto, gas manual
 
     @property
     def gasflow_setpoint(self):
@@ -184,7 +185,7 @@ class Itc503(TempController):
             raise ValueError('Gas flow must be between 0 and 99.9%')
 
         value = round(value, 1)
-        self.connection.query('G{}'.format(str(value)))
+        self.query('G{}'.format(str(value)))
 
     @property
     def alarms(self):
