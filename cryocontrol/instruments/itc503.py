@@ -19,13 +19,13 @@ class Itc503(TempController):
         super().connect(**kwargs)
 
         if self.connected:
-            self.connection.write('C3')  # set to remote mode
             self.connection.write('Q0')  # read termination with CR
+            self.connection.write('C3')  # set to remote mode
 
     def _get_status(self):
         status = self.connection.query('X')
         pattern = ('(?P<system>X\d)(?P<auto>A\d)(?P<lock>C\d)'
-                   '(?P<sweep>S\d\d)(?P<control_sensor>H\d)(?P<auto_pid>L\d)')
+                   '(?P<sweep>S\d{1,2})(?P<control_sensor>H\d)(?P<auto_pid>L\d)')
         match = re.fullmatch(pattern, status)
         return match.groupdict()
 
