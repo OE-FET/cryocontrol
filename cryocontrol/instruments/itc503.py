@@ -29,6 +29,10 @@ class Itc503(TempController):
         match = re.fullmatch(pattern, status)
         return match.groupdict()
 
+    def _read_channel(self, number):
+        resp = self.connection.query('R{:.0f}'.format(number))
+        return float(resp[1:])
+
     def select_temp_module(self, name):
         """
         Updates module list after the new modules have been selected. Only applicable
@@ -38,7 +42,6 @@ class Itc503(TempController):
         """
         if name not in ('1', '2', '3'):
             raise ValueError("Sensor name must be '1', '2' or '3'")
-
         self.connection.write('H{}'.format(name))
 
     def select_heater_module(self, name):
@@ -60,12 +63,12 @@ class Itc503(TempController):
     @property
     def temperature(self):
         """Returns the current temperature in Kelvin."""
-        return float(self.connection.query('R1'))
+        return self._read_channel(1)
 
     @property
     def temperature_setpoint(self):
         """Current temperature setpoint in Kelvin."""
-        return float(self.connection.query('R0'))
+        return self._read_channel(0)
 
     @temperature_setpoint.setter
     def temperature_setpoint(self, value):
@@ -97,7 +100,7 @@ class Itc503(TempController):
     @property
     def heater_volt(self):
         """Current heater voltage in Volts."""
-        return self.connection.query('R6')
+        return self._read_channel(6)
 
     @property
     def heater_auto(self):
@@ -127,7 +130,7 @@ class Itc503(TempController):
     def heater_setpoint(self):
         """Heater setpoint in percent of maximum voltage."""
         # return the actual heater percent, not the setpoint
-        return self.connection.query('R5')
+        return self._read_channel(5)
 
     @heater_setpoint.setter
     def heater_setpoint(self, value):
@@ -140,7 +143,7 @@ class Itc503(TempController):
     @property
     def gasflow(self):
         """Current gasflow in percent."""
-        return self.connection.query('R7')
+        return self._read_channel(7)
 
     @property
     def gasflow_auto(self):
