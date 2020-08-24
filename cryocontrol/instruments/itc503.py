@@ -38,6 +38,7 @@ class Itc503(TempController):
         """
         if name not in ('1', '2', '3'):
             raise ValueError("Sensor name must be '1', '2' or '3'")
+
         self.connection.write('H{}'.format(name))
 
     def select_heater_module(self, name):
@@ -59,17 +60,17 @@ class Itc503(TempController):
     @property
     def temperature(self):
         """Returns the current temperature in Kelvin."""
-        return self.connection.query('R1')
+        return float(self.connection.query('R1'))
 
     @property
     def temperature_setpoint(self):
         """Current temperature setpoint in Kelvin."""
-        return self.connection.query('R0')
+        return float(self.connection.query('R0'))
 
     @temperature_setpoint.setter
     def temperature_setpoint(self, value):
         """Setter: Current temperature setpoint in Kelvin."""
-        if not 0 < value <= 300:
+        if not 0 <= value <= 300:
             raise ValueError('Temperature must be between 0 K and 300 K')
         self.connection.write('T{:4.0f}'.format(value*100))
 
