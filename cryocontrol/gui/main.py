@@ -169,7 +169,6 @@ class TemperatureControlGui(QtWidgets.QMainWindow):
     def update_gui_connection(self):
 
         if self.controller.connected:
-            self.display_message('Connection established.')
             self.led.setChecked(True)
 
             # enable / disable menu bar items
