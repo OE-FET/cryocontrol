@@ -356,7 +356,7 @@ class TemperatureControlGui(QtWidgets.QMainWindow):
     def change_t_setpoint(self):
         new_t = self.t2_edit.value()
 
-        if 0 < new_t < 300:
+        if 0 <= new_t <= 300:
             self.controller.temperature_setpoint = new_t
             self.display_message('T_setpoint = %s K' % new_t)
         else:
