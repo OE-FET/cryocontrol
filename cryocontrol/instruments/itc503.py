@@ -20,7 +20,7 @@ class Itc503(TempController):
 
         if self.connected:
             self.connection.write('Q0')  # read termination with CR
-            self.connection.write('C3')  # set to remote mode
+            self.connection.query('C3')  # set to remote mode
 
     def _get_status(self):
         status = self.connection.query('X')
@@ -42,7 +42,7 @@ class Itc503(TempController):
         """
         if name not in ('1', '2', '3'):
             raise ValueError("Sensor name must be '1', '2' or '3'")
-        self.connection.write('H{}'.format(name))
+        self.connection.query('H{}'.format(name))
 
     def select_heater_module(self, name):
         """
@@ -75,7 +75,9 @@ class Itc503(TempController):
         """Setter: Current temperature setpoint in Kelvin."""
         if not 0 <= value <= 300:
             raise ValueError('Temperature must be between 0 K and 300 K')
-        self.connection.write('T{:4.0f}'.format(value*100))
+
+        value = round(value, 2)
+        self.connection.query('T{}'.format(str(value)))
 
     @property
     def temperature_ramp(self):
@@ -117,14 +119,14 @@ class Itc503(TempController):
         status = self._get_status()
         if status['auto'] in ('A0', 'A1'):  # gas manual
             if value:
-                self.connection.write('A1')  # heater auto, gas manual
+                self.connection.query('A1')  # heater auto, gas manual
             else:
-                self.connection.write('A0')  # heater manual, gas manual
+                self.connection.query('A0')  # heater manual, gas manual
         else:  # gas auto
             if value:
-                self.connection.write('A3')  # heater auto, gas auto
+                self.connection.query('A3')  # heater auto, gas auto
             else:
-                self.connection.write('A2')  # heater manual, gas auto
+                self.connection.query('A2')  # heater manual, gas auto
 
     @property
     def heater_setpoint(self):
@@ -137,8 +139,8 @@ class Itc503(TempController):
         """Setter: Heater setpoint in percent of maximum voltage."""
         if not 0 <= value <= 99.9:
             raise ValueError('Heater output must be between 0 and 99.9%')
-
-        self.connection.write('O{:3.0f}'.format(value*10))
+        value = round(value, 1)
+        self.connection.query('O{}'.format(str(value)))
 
     @property
     def gasflow(self):
@@ -160,14 +162,14 @@ class Itc503(TempController):
         status = self._get_status()
         if status['auto'] in ('A0', 'A2'):  # heater manual
             if value:
-                self.connection.write('A2')  # heater manual, gas auto
+                self.connection.query('A2')  # heater manual, gas auto
             else:
-                self.connection.write('A0')  # heater manual, gas manual
+                self.connection.query('A0')  # heater manual, gas manual
         else:  # heater auto
             if value:
-                self.connection.write('A3')  # heater auto, gas auto
+                self.connection.query('A3')  # heater auto, gas auto
             else:
-                self.connection.write('A1')  # heater auto, gas manual
+                self.connection.query('A1')  # heater auto, gas manual
 
     @property
     def gasflow_setpoint(self):
@@ -181,7 +183,8 @@ class Itc503(TempController):
         if not 0 <= value <= 99.9:
             raise ValueError('Gas flow must be between 0 and 99.9%')
 
-        self.connection.write('G{:3.0f}'.format(value*10))
+        value = round(value, 1)
+        self.connection.query('G{}'.format(str(value)))
 
     @property
     def alarms(self):
