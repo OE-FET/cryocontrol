@@ -89,109 +89,109 @@ class TempController(ABC):
         """
         raise NotImplementedError()
 
-    @abstractmethod
     @property
+    @abstractmethod
     def temperature(self) -> float:
         """Returns the current temperature in Kelvin."""
         raise NotImplementedError()
 
-    @abstractmethod
     @property
+    @abstractmethod
     def temperature_setpoint(self) -> float:
         """Current temperature setpoint in Kelvin."""
         raise NotImplementedError()
 
-    @abstractmethod
     @temperature_setpoint.setter
+    @abstractmethod
     def temperature_setpoint(self, value: float):
         """Setter: Current temperature setpoint in Kelvin."""
         raise NotImplementedError()
 
-    @abstractmethod
     @property
+    @abstractmethod
     def temperature_ramp(self) -> float:
         """Temperature ramp speed in Kelvin / min."""
         raise NotImplementedError()
 
-    @abstractmethod
     @temperature_ramp.setter
+    @abstractmethod
     def temperature_ramp(self, value: float):
         """Setter: Temperature ramp speed in Kelvin / min."""
         raise NotImplementedError()
 
-    @abstractmethod
     @property
+    @abstractmethod
     def temperature_ramp_enabled(self) -> bool:
         """Temperature ramp enabled."""
         raise NotImplementedError()
 
-    @abstractmethod
     @temperature_ramp_enabled.setter
+    @abstractmethod
     def temperature_ramp_enabled(self, value: bool):
         """Setter: Temperature ramp enabled."""
         raise NotImplementedError()
 
-    @abstractmethod
     @property
+    @abstractmethod
     def heater_volt(self) -> float:
         """Current heater voltage in Volts."""
         raise NotImplementedError()
 
-    @abstractmethod
     @property
+    @abstractmethod
     def heater_auto(self) -> bool:
         """Automatic heater control enabled / disabled."""
         raise NotImplementedError()
 
-    @abstractmethod
     @heater_auto.setter
+    @abstractmethod
     def heater_auto(self, value: bool):
         """Setter: Automatic heater control enabled / disabled."""
         raise NotImplementedError()
 
-    @abstractmethod
     @property
+    @abstractmethod
     def heater_setpoint(self) -> float:
         """Heater setpoint in percent of maximum voltage."""
         raise NotImplementedError()
 
-    @abstractmethod
     @heater_setpoint.setter
+    @abstractmethod
     def heater_setpoint(self, value: float):
         """Setter: Heater setpoint in percent of maximum voltage."""
         raise NotImplementedError()
 
-    @abstractmethod
     @property
+    @abstractmethod
     def gasflow(self) -> float:
         """Current gasflow in percent."""
         raise NotImplementedError()
 
-    @abstractmethod
     @property
+    @abstractmethod
     def gasflow_auto(self) -> bool:
         """Automatic gasflow control enabled / disabled."""
         raise NotImplementedError()
 
-    @abstractmethod
     @gasflow_auto.setter
+    @abstractmethod
     def gasflow_auto(self, value: bool):
         """Setter: Automatic gasflow control enabled / disabled."""
         raise NotImplementedError()
 
-    @abstractmethod
     @property
+    @abstractmethod
     def gasflow_setpoint(self) -> float:
         """Gasflow setpoint in percent."""
         raise NotImplementedError()
 
-    @abstractmethod
     @gasflow_setpoint.setter
+    @abstractmethod
     def gasflow_setpoint(self, value: float) -> None:
         """Setter: Gasflow setpoint in percent."""
         raise NotImplementedError()
 
-    @abstractmethod
     @property
+    @abstractmethod
     def alarms(self) -> dict:
         raise NotImplementedError()
