@@ -12,7 +12,7 @@ setup(
     long_description_content_type='text/markdown',
     packages=find_packages(),
     package_data={
-        'cryocontrol': ['gui/*.ui'],
+        'cryocontrol': ['**/*.ui', '**/**/*.ui'],
     },
     entry_points={
         'console_scripts': [
