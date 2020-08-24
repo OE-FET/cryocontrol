@@ -10,6 +10,7 @@ import threading
 from enum import Enum
 import visa
 from abc import ABC, abstractmethod
+from typing import List
 
 
 class Control(Enum):
@@ -84,20 +85,41 @@ class TempController(ABC):
         raise NotImplementedError()
 
     @abstractmethod
+    def get_temp_modules(self) -> List[str]:
+        """
+        Returns a list of all available temperature sensors.
+        """
+        raise NotImplementedError()
+
+    @abstractmethod
     def select_heater_module(self, name: str) -> None:
         """
-        Selects the heater module to use.
+        Selects the heater module to use for the current temperature sensor.
 
         :param str name: Name of module to select.
         """
         raise NotImplementedError()
 
     @abstractmethod
+    def get_heater_modules(self) -> List[str]:
+        """
+        Returns a list of all available heaters.
+        """
+        raise NotImplementedError()
+
+    @abstractmethod
     def select_gasflow_module(self, name: str) -> None:
         """
-        Selects the gasflow module to use.
+        Selects the gasflow module to use for the current temperature sensor.
 
         :param str name: Name of module to select.
+        """
+        raise NotImplementedError()
+
+    @abstractmethod
+    def get_gasflow_modules(self) -> List[str]:
+        """
+        Returns a list of all available gas flow modules.
         """
         raise NotImplementedError()
 
