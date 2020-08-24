@@ -42,7 +42,7 @@ class TempController(ABC):
                 print('Invalid VISA address {}.'.format(self.visa_address))
                 self.connection = None
             except Exception:
-                print('Could not connect to Mercury at {}.'.format(self.visa_address))
+                print('Could not connect to instrument at {}.'.format(self.visa_address))
                 self.connection = None
 
     def disconnect(self) -> None:
