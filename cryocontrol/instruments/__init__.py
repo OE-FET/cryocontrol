@@ -6,4 +6,4 @@
 Attribution-NonCommercial-NoDerivs 2.0 UK: England & Wales License.
 
 """
-from .itc503 import Itc503
+from .itc503 import ITC503

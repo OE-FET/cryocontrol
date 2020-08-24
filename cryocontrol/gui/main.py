@@ -429,7 +429,7 @@ class TemperatureControlGui(QtWidgets.QMainWindow):
 
 def run():
 
-    from ..instruments import Itc503
+    from ..instruments import ITC503
     from ..config.main import CONF
 
     app = QtWidgets.QApplication(sys.argv)
@@ -437,7 +437,7 @@ def run():
     address = CONF.get('Connection', 'VISA_ADDRESS')
     lib = CONF.get('Connection', 'VISA_LIBRARY')
 
-    itc = Itc503(address, lib, open_timeout=1)
+    itc = ITC503(address, lib, open_timeout=1)
 
     gui = TemperatureControlGui(itc)
     gui.show()

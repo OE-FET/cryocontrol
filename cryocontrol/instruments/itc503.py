@@ -10,7 +10,7 @@ import re
 from .base import TempController
 
 
-class Itc503(TempController):
+class ITC503(TempController):
 
     def __init__(self, visa_address, visa_library='@py', **kwargs):
         super().__init__(visa_address, visa_library, read_termination='\r', **kwargs)
