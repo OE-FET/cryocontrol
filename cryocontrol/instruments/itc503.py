@@ -6,14 +6,21 @@
 Attribution-NonCommercial-NoDerivs 2.0 UK: England & Wales License.
 
 """
+import time
 import re
 from .base import TempController
 
 
 class ITC503(TempController):
 
+    _status_pattern = re.compile('(?P<system>X\d)(?P<auto>A\d)(?P<lock>C\d)'
+                                 '(?P<sweep>S\d{1,2})(?P<control_sensor>H\d)'
+                                 '(?P<auto_pid>L\d)')
+
     def __init__(self, visa_address, visa_library='@py', **kwargs):
         super().__init__(visa_address, visa_library, read_termination='\r', **kwargs)
+        self._last_status = 0
+        self._cached_status = None
 
     def connect(self, **kwargs):
         super().connect(**kwargs)
@@ -23,11 +30,14 @@ class ITC503(TempController):
             self.query('C3')  # set to remote mode
 
     def _get_status(self):
-        status = self.query('X')
-        pattern = ('(?P<system>X\d)(?P<auto>A\d)(?P<lock>C\d)'
-                   '(?P<sweep>S\d{1,2})(?P<control_sensor>H\d)(?P<auto_pid>L\d)')
-        match = re.fullmatch(pattern, status)
-        return match.groupdict()
+
+        if time.time() - self._last_status > 1:
+            status = self.query('X')
+            match = re.fullmatch(self._status_pattern, status)
+            self._cached_status = match.groupdict()
+            self._last_status = time.time()
+
+        return self._cached_status
 
     def _read_channel(self, number):
         resp = self.query('R{:.0f}'.format(number))
