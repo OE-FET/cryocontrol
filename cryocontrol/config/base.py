@@ -6,7 +6,6 @@ This file only deals with non-GUI configuration features
 sip API incompatibility issue in spyder's non-gui modules)
 """
 
-from __future__ import division, absolute_import
 import os.path as osp
 import os
 import shutil

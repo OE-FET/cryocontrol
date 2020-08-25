@@ -9,7 +9,6 @@ It's based on the ConfigParser module (present in the standard library).
 import ast
 import os
 import os.path as osp
-import sys
 import re
 import shutil
 import time
