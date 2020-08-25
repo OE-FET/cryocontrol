@@ -77,7 +77,6 @@ class TemperatureControlGui(QtWidgets.QMainWindow):
         self.restore_geometry()
 
         # connect to callbacks
-        self.showLogAction.triggered.connect(self.on_log_clicked)
         self.exitAction.triggered.connect(self.exit_)
         self.connectAction.triggered.connect(self.controller.connect)
         self.disconnectAction.triggered.connect(self.controller.disconnect)
@@ -120,9 +119,6 @@ class TemperatureControlGui(QtWidgets.QMainWindow):
 
         self.thread.started.connect(self.worker.run)
         self.thread.start()
-
-        # set up logging to file
-        self.setup_logging()
 
 # =================== BASIC UI SETUP ==========================================
 
@@ -277,71 +273,6 @@ class TemperatureControlGui(QtWidgets.QMainWindow):
         self.canvas.update_data(self.xdata, self.ydata_tmpr,
                                 self.ydata_gflw, self.ydata_htr)
 
-# =================== LOGGING DATA ============================================
-
-    def setup_logging(self):
-        """
-        Set up logging of temperature history to files.
-        Save temperature history to log file at '~/.CustomXepr/LOG_FILES/'
-        after every 10 min.
-        """
-        # find user home directory
-        home_path = os.path.expanduser('~')
-        self.logging_path = os.path.join(home_path, '.cryogui', 'LOG_FILES')
-
-        # create folder '~/.CustomXepr/LOG_FILES' if not present
-        if not os.path.exists(self.logging_path):
-            os.makedirs(self.logging_path)
-        # set logging file path
-        self.log_file = os.path.join(self.logging_path, 'temperature_log ' +
-                                     time.strftime("%Y-%m-%d_%H-%M-%S") + '.txt')
-
-        # delete old log files
-        now = time.time()
-        days_to_keep = 7
-
-        for f in os.listdir(self.logging_path):
-            f = os.path.join(self.logging_path, f)
-            if os.stat(f).st_mtime < now - days_to_keep*24*60*60:
-                if os.path.isfile(f):
-                    os.remove(f)
-
-        # set up periodic logging
-        t_save = 10  # time interval to save temperature data (min)
-        self.save_timer = QtCore.QTimer()
-        self.save_timer.setInterval(t_save*60*1000)
-        self.save_timer.setSingleShot(False)  # set to reoccur
-        self.save_timer.timeout.connect(self.log_temperature_data)
-        self.save_timer.start()
-
-    def save_temperature_data(self, path=None):
-        # prompt user for file path if not given
-        if path is None:
-            text = 'Select path for temperature data file:'
-            path = QtWidgets.QFileDialog.getSaveFileName(caption=text)
-            path = path[0]
-
-        if not path.endswith('.txt'):
-            path += '.txt'
-
-        title = 'temperature trace, saved on ' + time.strftime('%d/%m/%Y') + '\n'
-
-        header = '\t'.join(['Time (sec)', 'Temperature (K)',
-                            'Heater (%)', 'Gas flow (%)'])
-
-        data_matrix = np.concatenate((self.xdata[:, np.newaxis],
-                                      self.ydata_tmpr[:, np.newaxis],
-                                      self.ydata_htr[:, np.newaxis],
-                                      self.ydata_gflw[:, np.newaxis]), axis=1)
-
-        # noinspection PyTypeChecker
-        np.savetxt(path, data_matrix, delimiter='\t', header=title + header, fmt='%f')
-
-    def log_temperature_data(self):
-        # save temperature data to log file
-        if self.controller.connected:
-            self.save_temperature_data(self.log_file)
-
 # =================== CALLBACKS FOR SETTING CHANGES ===========================
 
     @QtCore.pyqtSlot()
@@ -403,21 +334,6 @@ class TemperatureControlGui(QtWidgets.QMainWindow):
             self.display_message('Heater is manually controlled.')
             self.h1_edit.setReadOnly(False)
             self.h1_edit.setEnabled(True)
-
-# ========================== CALLBACKS FOR MENU BAR ===========================
-
-    @QtCore.pyqtSlot()
-    def on_log_clicked(self):
-        """
-        Opens directory with log files with current log file selected.
-        """
-
-        if platform.system() == 'Windows':
-            os.startfile(self.logging_path)
-        elif platform.system() == 'Darwin':
-            subprocess.Popen(['open', self.logging_path])
-        else:
-            subprocess.Popen(['xdg-open', self.logging_path])
 
 
 class DataCollectionWorker(QtCore.QObject):

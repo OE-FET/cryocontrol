@@ -377,7 +377,6 @@
     <property name="title">
      <string>File</string>
     </property>
-    <addaction name="showLogAction"/>
    </widget>
    <widget class="QMenu" name="menu_Edit">
     <property name="title">
