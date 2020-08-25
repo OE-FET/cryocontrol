@@ -31,13 +31,15 @@ class ITC503(TempController):
 
     def _get_status(self):
 
-        if time.time() - self._last_status > 1:
-            status = self.query('X')
-            match = re.fullmatch(self._status_pattern, status)
-            self._cached_status = match.groupdict()
-            self._last_status = time.time()
+        with self._lock:
 
-        return self._cached_status
+            if time.time() - self._last_status > 1 or not self._cached_status:
+                status = self.query('X')
+                match = re.fullmatch(self._status_pattern, status)
+                self._cached_status = match.groupdict()
+                self._last_status = time.time()
+
+            return self._cached_status
 
     def _read_channel(self, number):
         resp = self.query('R{:.0f}'.format(number))
