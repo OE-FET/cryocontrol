@@ -102,10 +102,7 @@ class DefaultsConfig(cp.ConfigParser):
     UserConfig
     """
     def __init__(self, name, subfolder):
-        if PY2:
-            cp.ConfigParser.__init__(self)
-        else:
-            cp.ConfigParser.__init__(self, interpolation=None)
+        cp.ConfigParser.__init__(self, interpolation=None)
 
         self.name = name
         self.subfolder = subfolder
@@ -133,14 +130,8 @@ class DefaultsConfig(cp.ConfigParser):
         fname = self.filename()
 
         def _write_file(fname):
-            if PY2:
-                # Python 2
-                with codecs.open(fname, 'w', encoding='utf-8') as configfile:
-                    self.write(configfile)
-            else:
-                # Python 3
-                with open(fname, 'w', encoding='utf-8') as configfile:
-                    self.write(configfile)
+            with open(fname, 'w', encoding='utf-8') as configfile:
+                self.write(configfile)
 
         try:  # the "easy" way
             _write_file(fname)
@@ -398,19 +389,18 @@ class UserConfig(DefaultsConfig):
         elif isinstance(default_value, int):
             value = int(value)
         elif is_text_string(default_value):
-            if PY2:
+            try:
+                value = value.decode('utf-8')
                 try:
-                    value = value.decode('utf-8')
-                    try:
-                        # Some str config values expect to be eval after
-                        # decoding
-                        new_value = ast.literal_eval(value)
-                        if is_text_string(new_value):
-                            value = new_value
-                    except (SyntaxError, ValueError):
-                        pass
-                except (UnicodeEncodeError, UnicodeDecodeError):
+                    # Some str config values expect to be eval after
+                    # decoding
+                    new_value = ast.literal_eval(value)
+                    if is_text_string(new_value):
+                        value = new_value
+                except (SyntaxError, ValueError):
                     pass
+            except (UnicodeEncodeError, UnicodeDecodeError):
+                pass
         else:
             try:
                 # lists, tuples, ...
@@ -437,9 +427,6 @@ class UserConfig(DefaultsConfig):
         section = self._check_section_option(section, option)
         default_value = self.get_default(section, option)
         if default_value is NoDefault:
-            # This let us save correctly string value options with
-            # no config default that contain non-ascii chars in
-            # Python 2
             if is_text_string(value):
                 value = repr(value)
             default_value = value
