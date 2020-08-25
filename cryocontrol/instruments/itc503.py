@@ -42,7 +42,7 @@ class ITC503(TempController):
     def _read_channel(self, number):
         resp = self.query('R{:.0f}'.format(number))
         if resp.startswith('?'):
-            raise IOError('Bad response')
+            raise IOError('Bad response: "{}"'.format(resp))
 
         numeric = ''.join(list(filter(lambda s: s in '0123456789.', resp)))
         return float(numeric)
