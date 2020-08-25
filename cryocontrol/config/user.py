@@ -18,20 +18,11 @@ import configparser as cp
 from distutils.version import LooseVersion
 
 # Local imports
-from mercurygui.config.base import get_conf_path, get_home_dir
-
-PY2 = sys.version[0] == '2'
+from .base import get_conf_path, get_home_dir
 
 
 def is_text_string(obj):
-    """Return True if `obj` is a text string, False if it is anything else,
-    like binary data (Python 3) or QString (Python 2, PyQt API #1)"""
-    if PY2:
-        # Python 2
-        return isinstance(obj, basestring)
-    else:
-        # Python 2
-        return isinstance(obj, str)
+    return isinstance(obj, str)
 
 
 def is_stable_version(version):

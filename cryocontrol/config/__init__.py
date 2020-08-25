@@ -1,1 +1,1 @@
-from mercurygui.config.main import CONF
+from .main import CONF

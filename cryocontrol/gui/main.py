@@ -105,7 +105,7 @@ class TemperatureControlGui(QtWidgets.QMainWindow):
         self.h1_edit.setEnabled(False)
         self.h2_checkbox.setEnabled(False)
 
-        # check if mercury is connected
+        # check if instrument is connected
         self.display_message('Looking for temperature controller at %s...' %
                              self.controller.visa_address)
         self.update_gui_connection(self.controller.connected)
@@ -287,7 +287,7 @@ class TemperatureControlGui(QtWidgets.QMainWindow):
         """
         # find user home directory
         home_path = os.path.expanduser('~')
-        self.logging_path = os.path.join(home_path, '.mercurygui', 'LOG_FILES')
+        self.logging_path = os.path.join(home_path, '.cryogui', 'LOG_FILES')
 
         # create folder '~/.CustomXepr/LOG_FILES' if not present
         if not os.path.exists(self.logging_path):

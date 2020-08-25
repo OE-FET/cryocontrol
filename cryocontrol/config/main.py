@@ -5,7 +5,7 @@
 # (see spyder/__init__.py for details)
 
 """
-MercuryGUI configuration options
+Configuration options
 
 Note: Leave this file free of Qt related imports, so that it can be used to
 quickly load a user config file.
@@ -14,7 +14,7 @@ To add:
 * More feed settings, such as refresh rate, etc?
 """
 # local imports
-from mercurygui.config.user import UserConfig
+from .user import UserConfig
 
 PACKAGE_NAME = 'cryocontrol'
 SUBFOLDER = '.%s' % PACKAGE_NAME
