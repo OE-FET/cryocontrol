@@ -25,7 +25,6 @@ from .pyqtplot_canvas import TemperatureHistoryPlot
 from ..config.main import CONF
 
 MAIN_UI_PATH = pkgr.resource_filename('cryocontrol', 'gui/main.ui')
-
 logger = logging.getLogger(__name__)
 
 
@@ -33,6 +32,9 @@ class TemperatureControlGui(QtWidgets.QMainWindow):
 
     QUIT_ON_CLOSE = True
     MAX_DISPLAY = 24*60*60
+
+    new_readings_signal = QtCore.pyqtSignal(dict)
+    connected_signal = QtCore.pyqtSignal(bool)
 
     def __init__(self, controller: TempController):
         super(self.__class__, self).__init__()
@@ -108,13 +110,17 @@ class TemperatureControlGui(QtWidgets.QMainWindow):
         # check if mercury is connected, connect slots
         self.display_message('Looking for temperature controller at %s...' %
                              self.controller.visa_address)
-        self.update_gui_connection()
 
         # get new readings every second, update UI
-        self.timer = QtCore.QTimer()
-        self.timer.setInterval(1000)
-        self.timer.timeout.connect(self.update_gui)
-        self.timer.start()
+        self.thread = QtCore.QThread()
+        self.worker = DataCollectionWorker(self.controller)
+        self.worker.moveToThread(self.thread)
+        self.worker.readings_signal.connect(self.update_readings)
+        self.worker.readings_signal.connect(self.update_plot)
+        self.worker.connected_signal.connect(self.update_gui_connection)
+
+        self.thread.started.connect(self.worker.run)
+        self.thread.start()
 
         # set up logging to file
         self.setup_logging()
@@ -156,19 +162,10 @@ class TemperatureControlGui(QtWidgets.QMainWindow):
         self.canvas.p0.setXRange(-sv, 0)
         self.canvas.p0.enableAutoRange(x=False, y=True)
 
-    @QtCore.pyqtSlot()
-    def update_gui(self):
+    @QtCore.pyqtSlot(bool)
+    def update_gui_connection(self, connected):
 
-        self.update_gui_connection()
-
-        if self.controller.connected:
-            self.update_readings()
-            self.update_plot()
-
-    @QtCore.pyqtSlot()
-    def update_gui_connection(self):
-
-        if self.controller.connected:
+        if connected:
             self.led.setChecked(True)
 
             # enable / disable menu bar items
@@ -186,7 +183,7 @@ class TemperatureControlGui(QtWidgets.QMainWindow):
 
         else:
             self.display_error('Connection lost.')
-            logger.info('Connection to MercuryiTC lost.')
+            logger.info('Connection to instrument lost.')
             self.led.setChecked(False)
 
             # enable / disable menu bar items
@@ -210,54 +207,51 @@ class TemperatureControlGui(QtWidgets.QMainWindow):
         self.statusbar.showMessage('%s' % text)
 
     @QtCore.pyqtSlot(object)
-    def update_readings(self):
+    def update_readings(self, readings):
 
         # heater signals
-        self.h1_label.setText('Heater, {} V:'.format(self.controller.heater_volt))
-        self.h1_edit.updateValue(self.controller.heater_setpoint)
+        self.h1_label.setText('Heater, {} V:'.format(readings.get('HeaterVolt')))
+        self.h1_edit.updateValue(readings.get('HeaterPercent'))
 
-        is_heater_auto = self.controller.heater_auto
+        is_heater_auto = readings.get('HeaterAuto')
         self.h1_edit.setReadOnly(is_heater_auto)
         self.h1_edit.setEnabled(not is_heater_auto)
         self.h2_checkbox.setChecked(is_heater_auto)
         self.h2_checkbox.setEnabled(True)
 
         # gas flow signals
-        self.gf1_edit.updateValue(self.controller.gasflow)
+        self.gf1_edit.updateValue(readings.get('FlowPercent'))
 
-        is_gf_auto = self.controller.gasflow_auto
+        is_gf_auto = readings.get('FlowAuto')
         self.gf1_edit.setReadOnly(is_gf_auto)
         self.gf1_edit.setEnabled(not is_gf_auto)
         self.gf2_checkbox.setChecked(is_gf_auto)
         self.gf2_checkbox.setEnabled(True)
 
         # temperature signals
-        self.t1_reading.setText('{} K'.format(self.controller.temperature))
-        self.t2_edit.updateValue(self.controller.temperature_setpoint)
-        self.r1_edit.updateValue(self.controller.temperature_ramp)
+        self.t1_reading.setText('{} K'.format(readings.get('Temp')))
+        self.t2_edit.updateValue(readings.get('TempSetpoint'))
+        self.r1_edit.updateValue(readings.get('TempRamp'))
 
-        is_ramp_enable = self.controller.temperature_ramp_enabled
+        is_ramp_enable = readings.get('TempRampEnable')
         self.r2_checkbox.setChecked(is_ramp_enable)
 
         # alarms
-        alarm_str = ''
-        for k, v in self.controller.alarms:
-            alarm_str += '{}: {} '.format(k, v)
+        alarms = readings.get('Alarms')
+        self.alarm_label.setText(alarms)
 
-        self.alarm_label.setText(alarm_str)
-
-        if alarm_str:
+        if alarms:
             self.alarm_label.show()
         else:
             self.alarm_label.hide()
 
-    @QtCore.pyqtSlot()
-    def update_plot(self):
+    @QtCore.pyqtSlot(object)
+    def update_plot(self, readings):
         # append data for plotting
         self.xdata = np.append(self.xdata, time.time())
-        self.ydata_tmpr = np.append(self.ydata_tmpr, self.controller.temperature)
-        self.ydata_gflw = np.append(self.ydata_gflw, self.controller.gasflow / 100)
-        self.ydata_htr = np.append(self.ydata_htr, self.controller.heater_setpoint / 100)
+        self.ydata_tmpr = np.append(self.ydata_tmpr, readings.get('Temp'))
+        self.ydata_gflw = np.append(self.ydata_gflw, readings.get('FlowPercent') / 100)
+        self.ydata_htr = np.append(self.ydata_htr, readings.get('HeaterPercent') / 100)
 
         # prevent data vector from exceeding MAX_DISPLAY
         self.xdata = self.xdata[-self.MAX_DISPLAY:]
@@ -425,6 +419,61 @@ class TemperatureControlGui(QtWidgets.QMainWindow):
             subprocess.Popen(['open', self.logging_path])
         else:
             subprocess.Popen(['xdg-open', self.logging_path])
+
+
+class DataCollectionWorker(QtCore.QObject):
+
+    readings_signal = QtCore.pyqtSignal(object)
+    connected_signal = QtCore.pyqtSignal(bool)
+
+    def __init__(self, controller, refresh=1):
+        super().__init__()
+
+        self.refresh = refresh
+        self.controller = controller
+        self.readings = {}
+        self.running = True
+        self.terminate = False
+
+        self.connected_signal.emit(self.controller.connected)
+
+    def run(self):
+        while not self.terminate:
+            if self.running:
+                try:
+                    self.get_readings()
+                    QtCore.QThread.sleep(int(self.refresh))
+                except Exception:
+                    self.connected_signal.emit(False)
+                    self.running = False
+                    logger.warning('Connection to instrument lost.')
+
+            elif not self.running:
+                QtCore.QThread.msleep(int(self.refresh*1000))
+
+    def get_readings(self):
+
+        # read temperature data
+        self.readings['Temp'] = self.controller.temperature
+        self.readings['TempSetpoint'] = self.controller.temperature_setpoint
+        self.readings['TempRamp'] = self.controller.temperature_ramp
+        self.readings['TempRampEnable'] = self.controller.temperature_ramp_enabled
+
+        # read heater data
+        self.readings['HeaterVolt'] = self.controller.heater_volt
+        self.readings['HeaterAuto'] = self.controller.heater_auto
+        self.readings['HeaterPercent'] = self.controller.heater_setpoint
+
+        self.readings['FlowAuto'] = self.controller.gasflow_auto
+        self.readings['FlowPercent'] = self.controller.gasflow
+        self.readings['FlowSetpoint'] = self.controller.gasflow_setpoint
+
+        # read alarms
+        alarms = self.controller.alarms
+        self.readings['Alarms'] = str(alarms) if alarms else ''
+
+        # emit readings
+        self.readings_signal.emit(self.readings)
 
 
 def run():
