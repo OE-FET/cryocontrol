@@ -441,7 +441,7 @@ class DataCollectionWorker(QtCore.QObject):
                 try:
                     self.get_readings()
                     QtCore.QThread.sleep(int(self.refresh))
-                except Exception:
+                except ConnectionError:
                     self.connected_signal.emit(False)
                     self.running = False
                     logger.warning('Connection to instrument lost.')

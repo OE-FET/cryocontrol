@@ -42,7 +42,7 @@ class TempController(ABC):
             except AttributeError:
                 print('Invalid VISA address {}.'.format(self.visa_address))
                 self.connection = None
-            except Exception:
+            except visa.Error:
                 print('Could not connect to instrument at {}.'.format(self.visa_address))
                 self.connection = None
 
@@ -59,15 +59,24 @@ class TempController(ABC):
 
     def query(self, value: str) -> str:
         with self._lock:
-            return self.connection.query(value)
+            try:
+                return self.connection.query(value)
+            except (ConnectionError, AttributeError, visa.Error):
+                raise ConnectionError('Connection to the instrument failed')
 
     def read(self) -> str:
         with self._lock:
-            return self.connection.read()
+            try:
+                return self.connection.read()
+            except (ConnectionError, AttributeError, visa.Error):
+                raise ConnectionError('Connection to the instrument failed')
 
     def write(self, value: str) -> None:
         with self._lock:
-            self.connection.write(value)
+            try:
+                self.connection.write(value)
+            except (ConnectionError, AttributeError, visa.Error):
+                raise ConnectionError('Connection to the instrument failed')
 
     def __repr__(self) -> str:
         return '<{}({})>'.format(type(self).__name__, self.visa_address)
