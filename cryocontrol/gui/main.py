@@ -33,9 +33,6 @@ class TemperatureControlGui(QtWidgets.QMainWindow):
     QUIT_ON_CLOSE = True
     MAX_DISPLAY = 24*60*60
 
-    new_readings_signal = QtCore.pyqtSignal(dict)
-    connected_signal = QtCore.pyqtSignal(bool)
-
     def __init__(self, controller: TempController):
         super(self.__class__, self).__init__()
         uic.loadUi(MAIN_UI_PATH, self)
@@ -107,9 +104,10 @@ class TemperatureControlGui(QtWidgets.QMainWindow):
         self.h1_edit.setEnabled(False)
         self.h2_checkbox.setEnabled(False)
 
-        # check if mercury is connected, connect slots
+        # check if mercury is connected
         self.display_message('Looking for temperature controller at %s...' %
                              self.controller.visa_address)
+        self.update_gui_connection(self.controller.connected)
 
         # get new readings every second, update UI
         self.thread = QtCore.QThread()
