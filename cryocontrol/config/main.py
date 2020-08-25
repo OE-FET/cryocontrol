@@ -16,7 +16,7 @@ To add:
 # local imports
 from mercurygui.config.user import UserConfig
 
-PACKAGE_NAME = 'mercurygui'
+PACKAGE_NAME = 'cryocontrol'
 SUBFOLDER = '.%s' % PACKAGE_NAME
 
 
@@ -36,11 +36,6 @@ DEFAULTS = [
               'VISA_ADDRESS': 'TCPIP0::192.168.1.122::7020::SOCKET',
               'VISA_LIBRARY': '',
               }),
-            (
-             'MercuryFeed',
-             {
-              'temperature_module': '',
-              }),
             ]
 
 
@@ -54,7 +49,7 @@ DEFAULTS = [
 #    or if you want to *rename* options, then you need to do a MAJOR update in
 #    version, e.g. from 3.0.0 to 4.0.0
 # 3. You don't need to touch this value if you're just adding a new option
-CONF_VERSION = '4.0.0'
+CONF_VERSION = '1.0.0'
 
 # Main configuration instance
 try:
