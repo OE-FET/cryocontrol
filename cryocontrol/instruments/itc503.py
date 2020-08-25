@@ -18,7 +18,7 @@ class ITC503(TempController):
                                  '(?P<auto_pid>L\d)')
 
     def __init__(self, visa_address, visa_library='@py', **kwargs):
-        super().__init__(visa_address, visa_library, read_termination='\r', **kwargs)
+        super().__init__(visa_address, visa_library, read_termination='\r\n', **kwargs)
         self._last_status = 0
         self._cached_status = None
 
@@ -26,7 +26,7 @@ class ITC503(TempController):
         super().connect(**kwargs)
 
         if self.connected:
-            self.write('Q0')  # read termination with CR
+            self.write('Q2')  # read termination with CR
             self.query('C3')  # set to remote mode
 
     def _get_status(self):
