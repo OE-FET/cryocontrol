@@ -41,9 +41,10 @@ class ITC503(TempController):
 
     def _read_channel(self, number):
         resp = self.query('R{:.0f}'.format(number))
+        if resp.startswith('?'):
+            raise IOError('Bad response')
+
         numeric = ''.join(list(filter(lambda s: s in '0123456789.', resp)))
-        if not resp.startswith('R'):
-            print('Warning: badly formatted response "{}"'.format(resp))
         return float(numeric)
 
     def select_temp_module(self, name):
