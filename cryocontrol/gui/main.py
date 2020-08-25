@@ -9,9 +9,6 @@ Attribution-NonCommercial-NoDerivs 2.0 UK: England & Wales License.
 
 # system imports
 import sys
-import os
-import platform
-import subprocess
 import pkg_resources as pkgr
 import time
 import numpy as np
