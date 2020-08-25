@@ -16,6 +16,7 @@ import pkg_resources as pkgr
 import time
 import numpy as np
 import logging
+import traceback
 from PyQt5 import QtCore, QtWidgets, uic
 
 # local imports
@@ -445,6 +446,9 @@ class DataCollectionWorker(QtCore.QObject):
                     self.connected_signal.emit(False)
                     self.running = False
                     logger.warning('Connection to instrument lost.')
+                except Exception:
+                    traceback.print_exc()
+                    logger.exception('Error when getting readings')
 
             elif not self.running:
                 QtCore.QThread.msleep(int(self.refresh*1000))
