@@ -286,7 +286,7 @@ class TemperatureControlGui(QtWidgets.QMainWindow):
 
     @QtCore.pyqtSlot(bool)
     def change_ramp_auto(self, checked):
-        self.controller.temperature_ramp = checked
+        self.controller.temperature_ramp_enabled = checked
         if checked:
             self.display_message('Ramp is turned ON')
         else:
