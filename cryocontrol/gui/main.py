@@ -107,14 +107,10 @@ class TemperatureControlGui(QtWidgets.QMainWindow):
         self.update_gui_connection(self.controller.connected)
 
         # get new readings every second, update UI
-        self.thread = QtCore.QThread()
-        self.worker = DataCollectionWorker(self.controller)
-        self.worker.moveToThread(self.thread)
-        self.worker.readings_signal.connect(self.update_readings)
-        self.worker.readings_signal.connect(self.update_plot)
-        self.worker.connected_signal.connect(self.update_gui_connection)
-
-        self.thread.started.connect(self.worker.run)
+        self.thread = DataCollectionThread(self.controller)
+        self.thread.readings_signal.connect(self.update_readings)
+        self.thread.readings_signal.connect(self.update_plot)
+        self.thread.connected_signal.connect(self.update_gui_connection)
         self.thread.start()
 
 # =================== BASIC UI SETUP ==========================================
@@ -141,6 +137,8 @@ class TemperatureControlGui(QtWidgets.QMainWindow):
 
     def closeEvent(self, event):
         if self.QUIT_ON_CLOSE:
+            self.thread.running = False
+            self.thread.wait()
             self.exit_()
         else:
             self.hide()
@@ -175,7 +173,6 @@ class TemperatureControlGui(QtWidgets.QMainWindow):
 
         else:
             self.display_error('Connection lost.')
-            logger.info('Connection to instrument lost.')
             self.led.setChecked(False)
 
             # enable / disable menu bar items
@@ -333,7 +330,7 @@ class TemperatureControlGui(QtWidgets.QMainWindow):
             self.h1_edit.setEnabled(True)
 
 
-class DataCollectionWorker(QtCore.QObject):
+class DataCollectionThread(QtCore.QThread):
 
     readings_signal = QtCore.pyqtSignal(object)
     connected_signal = QtCore.pyqtSignal(bool)
@@ -345,26 +342,22 @@ class DataCollectionWorker(QtCore.QObject):
         self.controller = controller
         self.readings = {}
         self.running = True
-        self.terminate = False
 
         self.connected_signal.emit(self.controller.connected)
 
     def run(self):
-        while not self.terminate:
-            if self.running:
-                try:
-                    self.get_readings()
-                    QtCore.QThread.sleep(int(self.refresh))
-                except ConnectionError:
-                    self.connected_signal.emit(False)
-                    self.running = False
-                    logger.warning('Connection to instrument lost.')
-                except Exception:
-                    traceback.print_exc()
-                    logger.exception('Error when getting readings')
 
-            elif not self.running:
-                QtCore.QThread.msleep(int(self.refresh*1000))
+        while self.running:
+            try:
+                self.get_readings()
+            except ConnectionError:
+                self.connected_signal.emit(False)
+                logger.info('Connection to instrument lost.')
+            except Exception:
+                traceback.print_exc()
+                logger.exception('Error when getting readings')
+
+            QtCore.QThread.sleep(int(self.refresh))
 
     def get_readings(self):
 
