@@ -109,6 +109,7 @@ class ITC503(TempController):
                 args=(value,),
                 name='ITC503-temperature-ramp'
             )
+            self._ramp_thread.start()
 
     @property
     def temperature_ramp(self):
