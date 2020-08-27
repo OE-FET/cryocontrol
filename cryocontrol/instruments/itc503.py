@@ -217,11 +217,18 @@ class ITC503(TempController):
         current = self.temperature_setpoint
 
         while not self._cancel_ramp.is_set() and round(current, 2) != target:
+
             if self._ramp_enabled:
                 step = sign(target - current) * self._ramp_speed / 60  # in Kelvin / sec
-                current += step
-                self.query('T{}'.format(str(round(current, 2))))
-                time.sleep(1)
+
+                if abs(current - target) > abs(step):
+                    current += step
+                    self.query('T{}'.format(str(round(current, 2))))
+                    time.sleep(1)
+                else:
+                    self.query('T{}'.format(str(round(target, 2))))
+                    self._cancel_ramp.set()
+
             else:
                 self.query('T{}'.format(str(round(target, 2))))
                 self._cancel_ramp.set()
