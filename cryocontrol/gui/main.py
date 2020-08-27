@@ -104,7 +104,6 @@ class TemperatureControlGui(QtWidgets.QMainWindow):
         # check if instrument is connected
         self.display_message('Looking for temperature controller at %s...' %
                              self.controller.visa_address)
-        self.update_gui_connection(self.controller.connected)
 
         # get new readings every second, update UI
         self.thread = DataCollectionThread(self.controller)
@@ -340,8 +339,8 @@ class DataCollectionThread(QtCore.QThread):
 
         self.refresh = refresh
         self.controller = controller
-        self.readings = {}
         self.running = True
+        self._connection_lost = True
 
         self.connected_signal.emit(self.controller.connected)
 
@@ -349,9 +348,15 @@ class DataCollectionThread(QtCore.QThread):
 
         while self.running:
             try:
-                self.get_readings()
+                readings = self.get_readings()
+                # emit readings
+                self.readings_signal.emit(readings)
+                if self._connection_lost:
+                    self.connected_signal.emit(True)
+                    self._connection_lost = False
             except ConnectionError:
                 self.connected_signal.emit(False)
+                self._connection_lost = True
                 logger.info('Connection to instrument lost.')
             except Exception:
                 traceback.print_exc()
@@ -361,27 +366,28 @@ class DataCollectionThread(QtCore.QThread):
 
     def get_readings(self):
 
+        readings = {}
+
         # read temperature data
-        self.readings['Temp'] = self.controller.temperature
-        self.readings['TempSetpoint'] = self.controller.temperature_setpoint
-        self.readings['TempRamp'] = self.controller.temperature_ramp
-        self.readings['TempRampEnable'] = self.controller.temperature_ramp_enabled
+        readings['Temp'] = self.controller.temperature
+        readings['TempSetpoint'] = self.controller.temperature_setpoint
+        readings['TempRamp'] = self.controller.temperature_ramp
+        readings['TempRampEnable'] = self.controller.temperature_ramp_enabled
 
         # read heater data
-        self.readings['HeaterVolt'] = self.controller.heater_volt
-        self.readings['HeaterAuto'] = self.controller.heater_auto
-        self.readings['HeaterPercent'] = self.controller.heater_setpoint
+        readings['HeaterVolt'] = self.controller.heater_volt
+        readings['HeaterAuto'] = self.controller.heater_auto
+        readings['HeaterPercent'] = self.controller.heater_setpoint
 
-        self.readings['FlowAuto'] = self.controller.gasflow_auto
-        self.readings['FlowPercent'] = self.controller.gasflow
-        self.readings['FlowSetpoint'] = self.controller.gasflow_setpoint
+        readings['FlowAuto'] = self.controller.gasflow_auto
+        readings['FlowPercent'] = self.controller.gasflow
+        readings['FlowSetpoint'] = self.controller.gasflow_setpoint
 
         # read alarms
         alarms = self.controller.alarms
-        self.readings['Alarms'] = str(alarms) if alarms else ''
+        readings['Alarms'] = str(alarms) if alarms else ''
 
-        # emit readings
-        self.readings_signal.emit(self.readings)
+        return readings
 
 
 def run():
