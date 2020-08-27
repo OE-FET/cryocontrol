@@ -7,8 +7,13 @@ Attribution-NonCommercial-NoDerivs 2.0 UK: England & Wales License.
 
 """
 import time
+import threading
 import re
 from .base import TempController
+
+
+def sign(x):
+    return (1, -1)[x < 0]
 
 
 class ITC503(TempController):
@@ -21,6 +26,10 @@ class ITC503(TempController):
         super().__init__(visa_address, visa_library, read_termination='\r\n', **kwargs)
         self._last_status = 0
         self._cached_status = None
+        self._ramp_speed = 5  # in Kelvin / min
+        self._ramp_enabled = False
+        self._cancel_ramp = threading.Event()
+        self._ramp_thread = None
 
     def connect(self, **kwargs):
         super().connect(**kwargs)
@@ -79,27 +88,45 @@ class ITC503(TempController):
 
     @temperature_setpoint.setter
     def temperature_setpoint(self, value):
+
         if not 0 <= value <= 300:
             raise ValueError('Temperature must be between 0 K and 300 K')
 
         value = round(value, 2)
-        self.query('T{}'.format(str(value)))
+
+        if not self._ramp_enabled:
+            self.query('T{}'.format(str(value)))
+        else:
+
+            # cancel previous ramp
+            self._cancel_ramp.set()
+            if self._ramp_thread:
+                self._ramp_thread.join()
+
+            # start new ramp
+            self._ramp_thread = threading.Thread(
+                target=self._ramp_to_temperature,
+                args=(value,),
+                name='ITC503-temperature-ramp'
+            )
 
     @property
     def temperature_ramp(self):
-        return 0
+        return self._ramp_speed
 
     @temperature_ramp.setter
     def temperature_ramp(self, value):
-        raise NotImplementedError('The current instrument does not support this')
+        if self._ramp_speed <= 0:
+            raise ValueError('Temperature ramp must be larger than 0 K/min')
+        self._ramp_speed = value
 
     @property
     def temperature_ramp_enabled(self):
-        return False
+        return self._ramp_enabled
 
     @temperature_ramp_enabled.setter
     def temperature_ramp_enabled(self, value):
-        raise NotImplementedError('The current instrument does not support this')
+        self._ramp_enabled = bool(value)
 
     @property
     def heater_volt(self):
@@ -181,3 +208,20 @@ class ITC503(TempController):
     @property
     def alarms(self):
         return dict()
+
+    def _ramp_to_temperature(self, target):
+
+        self._cancel_ramp.clear()
+
+        current = self.temperature_setpoint
+
+        while self._ramp_enabled and not self._cancel_ramp.is_set() \
+                and round(current, 2) != target:
+            if self._ramp_enabled:
+                step = sign(target - current) * self._ramp_speed / 60  # in Kelvin / sec
+                current += step
+                self.query('T{}'.format(str(round(current, 2))))
+                time.sleep(1)
+            else:
+                self.query('T{}'.format(str(round(current, 2))))
+                self._cancel_ramp.set()
