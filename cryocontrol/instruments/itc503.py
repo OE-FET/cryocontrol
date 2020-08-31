@@ -37,6 +37,7 @@ class ITC503(TempController):
         if self.connected:
             self.write('Q2')  # read termination with CR
             self.query('C3')  # set to remote mode
+            self.query('L1')  # set to auto PID since we cannot control PID yet
 
     def _get_status(self):
 
