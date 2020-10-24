@@ -8,7 +8,7 @@ Attribution-NonCommercial-NoDerivs 2.0 UK: England & Wales License.
 """
 import threading
 from enum import Enum
-import visa
+import pyvisa
 from abc import ABC, abstractmethod
 from typing import List
 
@@ -25,7 +25,7 @@ class TempController(ABC):
         self.visa_address = visa_address
         self.visa_library = visa_library
         self._connection_kwargs = kwargs
-        self.rm = visa.ResourceManager(self.visa_library)
+        self.rm = pyvisa.ResourceManager(self.visa_library)
         self.connect(**kwargs)
 
     def connect(self, **kwargs) -> None:
